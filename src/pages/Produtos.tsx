@@ -1,0 +1,191 @@
+import { useState, useEffect } from "react";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Button } from "../components/ui/button";
+import { Link } from "react-router-dom";
+
+interface Produto {
+  id: number;
+  nome: string;
+  preco: number;
+  descricao: string;
+  fornecedor: string;
+  imagem?: string;
+}
+
+interface Fornecedor {
+  id: number;
+  nome: string;
+  contato: string;
+  endereco: string;
+}
+
+export default function Produtos() {
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [nome, setNome] = useState("");
+  const [preco, setPreco] = useState<number>(0);
+  const [descricao, setDescricao] = useState("");
+  const [fornecedor, setFornecedor] = useState("");
+  const [imagem, setImagem] = useState<string | undefined>(undefined);
+  const [filtroNome, setFiltroNome] = useState("");
+  const [filtroFornecedor, setFiltroFornecedor] = useState("");
+  const [ordemPreco, setOrdemPreco] = useState<"asc" | "desc">("asc");
+
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+
+  // Carregar produtos e fornecedores do localStorage ao iniciar
+  useEffect(() => {
+    const dadosProdutos = localStorage.getItem("produtos");
+    if (dadosProdutos) {
+      setProdutos(JSON.parse(dadosProdutos));
+    }
+
+    const dadosFornecedores = localStorage.getItem("fornecedores");
+    if (dadosFornecedores) {
+      setFornecedores(JSON.parse(dadosFornecedores));
+    }
+  }, []);
+
+  // Atualizar o localStorage sempre que a lista de produtos mudar
+  useEffect(() => {
+    if (produtos.length > 0) {
+      localStorage.setItem("produtos", JSON.stringify(produtos));
+    }
+  }, [produtos]);
+
+  function handleCadastrarProduto(e: React.FormEvent) {
+    e.preventDefault();
+    if (!fornecedor) {
+      alert("Selecione um fornecedor válido.");
+      return;
+    }
+
+    const novoProduto: Produto = {
+      id: Date.now(),
+      nome,
+      preco,
+      descricao,
+      fornecedor,
+      imagem,
+    };
+
+    // Atualizar o estado dos produtos
+    setProdutos((prevProdutos) => {
+      const novosProdutos = [...prevProdutos, novoProduto];
+      return novosProdutos;
+    });
+
+    // Limpar os campos do formulário
+    setNome("");
+    setPreco(0);
+    setDescricao("");
+    setFornecedor("");
+    setImagem(undefined);
+  }
+
+  function handleExcluirProduto(id: number) {
+    const novosProdutos = produtos.filter((p) => p.id !== id);
+    setProdutos(novosProdutos);
+  }
+
+  function handleUploadImagem(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagem(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  const produtosFiltrados = produtos
+    .filter((p) => p.nome.toLowerCase().includes(filtroNome.toLowerCase()))
+    .filter((p) => p.fornecedor.toLowerCase().includes(filtroFornecedor.toLowerCase()))
+    .sort((a, b) => (ordemPreco === "asc" ? a.preco - b.preco : b.preco - a.preco));
+
+  return (
+    <div className="p-8 bg-gray-100 min-h-screen">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold mb-6">Cadastro de Produtos</h1>
+        <Link
+          to="/cadastro"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Voltar
+        </Link>
+      </div>
+
+      <form onSubmit={handleCadastrarProduto} className="space-y-4 bg-white p-6 rounded-lg shadow-md mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label>Nome</Label>
+            <Input value={nome} onChange={(e) => setNome(e.target.value)} required />
+          </div>
+          <div>
+            <Label>Preço</Label>
+            <Input type="number" value={preco} onChange={(e) => setPreco(Number(e.target.value))} required />
+          </div>
+          <div>
+            <Label>Descrição</Label>
+            <Input value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
+          </div>
+          <div>
+            <Label>Fornecedor</Label>
+            <select
+              value={fornecedor}
+              onChange={(e) => setFornecedor(e.target.value)}
+              required
+              className="border rounded p-2 w-full"
+            >
+              <option value="">Selecione um fornecedor</option>
+              {fornecedores.map((f) => (
+                <option key={f.id} value={f.nome}>
+                  {f.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label>Imagem</Label>
+            <Input type="file" accept="image/*" onChange={handleUploadImagem} />
+          </div>
+        </div>
+
+        <Button type="submit" className="w-full">
+          Cadastrar Produto
+        </Button>
+      </form>
+
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6 space-y-4">
+        <h2 className="text-xl font-semibold mb-4">Filtros</h2>
+        <Input placeholder="Filtrar por nome" value={filtroNome} onChange={(e) => setFiltroNome(e.target.value)} />
+        <Input placeholder="Filtrar por fornecedor" value={filtroFornecedor} onChange={(e) => setFiltroFornecedor(e.target.value)} />
+        <div className="flex space-x-4 mt-2">
+          <Button type="button" onClick={() => setOrdemPreco("asc")}>
+            Preço Crescente
+          </Button>
+          <Button type="button" onClick={() => setOrdemPreco("desc")}>
+            Preço Decrescente
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {produtosFiltrados.map((produto) => (
+          <div key={produto.id} className="bg-white p-4 rounded-lg shadow-md flex flex-col">
+            {produto.imagem && <img src={produto.imagem} alt="Imagem do Produto" className="h-40 object-cover mb-4 rounded-md" />}
+            <h3 className="text-xl font-bold">{produto.nome}</h3>
+            <p className="text-gray-600">Preço: R$ {produto.preco.toFixed(2)}</p>
+            <p className="text-gray-500">Fornecedor: {produto.fornecedor}</p>
+            <p className="text-gray-400 text-sm mt-2">{produto.descricao}</p>
+
+            <Button variant="destructive" onClick={() => handleExcluirProduto(produto.id)} className="mt-auto">
+              Excluir
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
