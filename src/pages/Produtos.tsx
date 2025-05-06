@@ -33,7 +33,7 @@ export default function Produtos() {
 
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
 
-  // Carregar produtos e fornecedores do localStorage ao iniciar
+  
   useEffect(() => {
     const dadosProdutos = localStorage.getItem("produtos");
     if (dadosProdutos) {
@@ -46,7 +46,7 @@ export default function Produtos() {
     }
   }, []);
 
-  // Atualizar o localStorage sempre que a lista de produtos mudar
+ 
   useEffect(() => {
     if (produtos.length > 0) {
       localStorage.setItem("produtos", JSON.stringify(produtos));
@@ -69,13 +69,13 @@ export default function Produtos() {
       imagem,
     };
 
-    // Atualizar o estado dos produtos
+    
     setProdutos((prevProdutos) => {
       const novosProdutos = [...prevProdutos, novoProduto];
       return novosProdutos;
     });
 
-    // Limpar os campos do formulário
+  
     setNome("");
     setPreco(0);
     setDescricao("");
@@ -84,8 +84,9 @@ export default function Produtos() {
   }
 
   function handleExcluirProduto(id: number) {
-    const novosProdutos = produtos.filter((p) => p.id !== id);
-    setProdutos(novosProdutos);
+    const atualizados = produtos.filter(produto => produto.id !== id);
+    setProdutos(atualizados);
+    localStorage.setItem("produtos", JSON.stringify(atualizados)); 
   }
 
   function handleUploadImagem(event: React.ChangeEvent<HTMLInputElement>) {

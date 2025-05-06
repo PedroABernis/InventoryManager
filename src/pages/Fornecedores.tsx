@@ -53,8 +53,9 @@ export default function Fornecedores() {
   }
 
   function handleExcluirFornecedor(id: number) {
-    const novosFornecedores = fornecedores.filter((f) => f.id !== id);
+    const novosFornecedores = fornecedores.filter(f => f.id !== id);
     setFornecedores(novosFornecedores);
+    localStorage.setItem("fornecedores", JSON.stringify(novosFornecedores)); 
   }
 
   return (

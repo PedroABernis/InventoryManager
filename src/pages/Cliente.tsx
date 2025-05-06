@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Input } from "../components/ui/input"; 
-import { Label } from "../components/ui/label"; 
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import { Button } from "../components/ui/button";
 
 interface Cliente {
@@ -33,9 +33,7 @@ export default function Clientes() {
   }, []);
 
   useEffect(() => {
-    if (clientes.length > 0) {
-      localStorage.setItem("clientes", JSON.stringify(clientes));
-    }
+    localStorage.setItem("clientes", JSON.stringify(clientes));
   }, [clientes]);
 
   const adicionarCliente = (e: React.FormEvent) => {
@@ -59,10 +57,7 @@ export default function Clientes() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gerenciar Clientes</h1>
-        <Link
-          to="/cadastro"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
+        <Link to="/cadastro" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           Voltar
         </Link>
       </div>
@@ -71,35 +66,19 @@ export default function Clientes() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label>Nome</Label>
-            <Input
-              value={novoCliente.nome}
-              onChange={e => setNovoCliente({ ...novoCliente, nome: e.target.value })}
-              required
-            />
+            <Input value={novoCliente.nome} onChange={e => setNovoCliente({ ...novoCliente, nome: e.target.value })} required />
           </div>
           <div>
             <Label>Contato</Label>
-            <Input
-              value={novoCliente.contato}
-              onChange={e => setNovoCliente({ ...novoCliente, contato: e.target.value })}
-              required
-            />
+            <Input value={novoCliente.contato} onChange={e => setNovoCliente({ ...novoCliente, contato: e.target.value })} required />
           </div>
           <div>
             <Label>Endereço</Label>
-            <Input
-              value={novoCliente.endereco}
-              onChange={e => setNovoCliente({ ...novoCliente, endereco: e.target.value })}
-              required
-            />
+            <Input value={novoCliente.endereco} onChange={e => setNovoCliente({ ...novoCliente, endereco: e.target.value })} required />
           </div>
           <div>
             <Label>CPF/CNPJ</Label>
-            <Input
-              value={novoCliente.cpfCnpj}
-              onChange={e => setNovoCliente({ ...novoCliente, cpfCnpj: e.target.value })}
-              required
-            />
+            <Input value={novoCliente.cpfCnpj} onChange={e => setNovoCliente({ ...novoCliente, cpfCnpj: e.target.value })} required />
           </div>
         </div>
 
@@ -111,19 +90,11 @@ export default function Clientes() {
       <div className="flex gap-4 mb-4">
         <div className="w-full">
           <Label>Filtrar por Nome</Label>
-          <Input
-            value={filtroNome}
-            onChange={e => setFiltroNome(e.target.value)}
-            required={false}
-          />
+          <Input value={filtroNome} onChange={e => setFiltroNome(e.target.value)} />
         </div>
         <div className="w-full">
           <Label>Filtrar por CPF/CNPJ</Label>
-          <Input
-            value={filtroCpfCnpj}
-            onChange={e => setFiltroCpfCnpj(e.target.value)}
-            required={false}
-          />
+          <Input value={filtroCpfCnpj} onChange={e => setFiltroCpfCnpj(e.target.value)} />
         </div>
       </div>
 
@@ -138,7 +109,8 @@ export default function Clientes() {
             </div>
             <Button
               onClick={() => excluirCliente(cliente.id)}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              variant="destructive"
+              className="ml-4"
             >
               Excluir
             </Button>
