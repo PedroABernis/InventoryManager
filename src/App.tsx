@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import Produtos from "./pages/Produtos";
 import Clientes from "./pages/Cliente";
 import Fornecedores from "./pages/Fornecedores";
+import Pedidos from "./pages/Pedidos";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/cadastro/produtos" element={<Produtos />} />
         <Route path="/cadastro/clientes" element={<Clientes />} />
         <Route path="/cadastro/fornecedores" element={<Fornecedores />} />
+        <Route path="/cadastro/pedidos" element={<Pedidos />} />
       </Routes>
     </Router>
   );
