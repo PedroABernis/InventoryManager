@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
 
 interface Cliente {
   id: number;
@@ -25,69 +26,177 @@ interface Pedido {
   clienteId: number;
   itens: ItemPedido[];
   total: number;
+  data: string;
+  concluido: boolean;
 }
 
 const Pedidos: React.FC = () => {
+  // Inicialização do estado de pedidos usando uma função para carregar do localStorage
+  const [pedidos, setPedidos] = useState<Pedido[]>(() => {
+    const pedidosSalvos = localStorage.getItem("pedidos");
+    try {
+      return pedidosSalvos ? JSON.parse(pedidosSalvos) : [];
+    } catch (e) {
+      console.error("Erro ao carregar pedidos do localStorage:", e);
+      return []; // Em caso de erro ao parsear, retorna um array vazio
+    }
+  });
+
+  // Clientes e Produtos são carregados aqui também, garantindo que estejam disponíveis
+  // Note que esses estados não precisam de funções de inicialização aqui se já são gerenciados em outras telas.
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
-  const [pedidos, setPedidos] = useState<Pedido[]>([]);
 
   const [clienteId, setClienteId] = useState<number>(0);
   const [produtoId, setProdutoId] = useState<number>(0);
   const [quantidade, setQuantidade] = useState<number>(1);
   const [itens, setItens] = useState<ItemPedido[]>([]);
 
-  useEffect(() => {
-    const clientesLS = localStorage.getItem('clientes');
-    const produtosLS = localStorage.getItem('produtos');
-    const pedidosLS = localStorage.getItem('pedidos');
+  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [editandoItemIndex, setEditandoItemIndex] = useState<number | null>(
+    null
+  );
 
-    if (clientesLS) setClientes(JSON.parse(clientesLS));
-    if (produtosLS) setProdutos(JSON.parse(produtosLS));
-    if (pedidosLS) setPedidos(JSON.parse(pedidosLS));
+  // useEffect para carregar Clientes e Produtos (e pedidos, se não inicializado acima)
+  // Este useEffect é executado apenas uma vez na montagem do componente
+  useEffect(() => {
+    const clientesLS = localStorage.getItem("clientes");
+    if (clientesLS) {
+      setClientes(JSON.parse(clientesLS));
+    }
+
+    const produtosLS = localStorage.getItem("produtos");
+    if (produtosLS) {
+      setProdutos(JSON.parse(produtosLS));
+    }
+    // A inicialização de 'pedidos' já está no useState, então não precisa aqui.
   }, []);
 
+  // useEffect para salvar pedidos no localStorage sempre que o estado 'pedidos' mudar
+  // Este useEffect é o responsável por persistir as alterações
   useEffect(() => {
-    localStorage.setItem('pedidos', JSON.stringify(pedidos));
+    localStorage.setItem("pedidos", JSON.stringify(pedidos));
   }, [pedidos]);
 
   const calcularTotal = (itens: ItemPedido[]): number => {
     return itens.reduce((total, item) => {
-      const produto = produtos.find(p => p.id === item.produtoId);
+      const produto = produtos.find((p) => p.id === item.produtoId);
       return total + (produto ? produto.preco * item.quantidade : 0);
     }, 0);
   };
 
   const adicionarItem = () => {
     if (!produtoId || quantidade <= 0) return;
-    setItens(prev => [...prev, { produtoId, quantidade }]);
+    setItens((prev) => [...prev, { produtoId, quantidade }]);
     setProdutoId(0);
     setQuantidade(1);
+  };
+
+  const editarItem = (index: number) => {
+    const item = itens[index];
+    setProdutoId(item.produtoId);
+    setQuantidade(item.quantidade);
+    setEditandoItemIndex(index);
+  };
+
+  const salvarItemEditado = () => {
+    if (editandoItemIndex === null || !produtoId || quantidade <= 0) return;
+    setItens((prev) => {
+      const novos = [...prev];
+      novos[editandoItemIndex] = { produtoId, quantidade };
+      return novos;
+    });
+    setProdutoId(0);
+    setQuantidade(1);
+    setEditandoItemIndex(null);
+  };
+
+  const removerItem = (index: number) => {
+    setItens((prev) => prev.filter((_, i) => i !== index));
+    if (editandoItemIndex === index) {
+      setProdutoId(0);
+      setQuantidade(1);
+      setEditandoItemIndex(null);
+    }
   };
 
   const salvarPedido = () => {
     if (!clienteId || itens.length === 0) return;
 
-    const novoPedido: Pedido = {
-      id: Date.now(),
-      clienteId,
-      itens,
-      total: calcularTotal(itens),
-    };
+    if (editandoId !== null) {
+      setPedidos((prev) => {
+        const updated = prev.map((p) =>
+          p.id === editandoId
+            ? { ...p, clienteId, itens, total: calcularTotal(itens) }
+            : p
+        );
+        return updated; // O useEffect de salvamento se encarrega de persistir
+      });
+      setEditandoId(null);
+    } else {
+      const novo: Pedido = {
+        id: Date.now(),
+        clienteId,
+        itens,
+        total: calcularTotal(itens),
+        data: new Date().toISOString(),
+        concluido: false,
+      };
+      setPedidos((prev) => {
+        const appended = [...prev, novo];
+        return appended; // O useEffect de salvamento se encarrega de persistir
+      });
+    }
 
-    setPedidos(prev => [...prev, novoPedido]);
+    // Limpar formulário após salvar/atualizar
     setClienteId(0);
     setItens([]);
+    setProdutoId(0);
+    setQuantidade(1);
+    setEditandoItemIndex(null);
   };
 
   const excluirPedido = (id: number) => {
-    setPedidos(prev => prev.filter(p => p.id !== id));
+    setPedidos((prev) => {
+      const filtered = prev.filter((p) => p.id !== id);
+      return filtered; // O useEffect de salvamento se encarrega de persistir
+    });
+  };
+
+  const editarPedido = (pedido: Pedido) => {
+    setClienteId(pedido.clienteId);
+    setItens(pedido.itens);
+    setEditandoId(pedido.id);
+    setProdutoId(0);
+    setQuantidade(1);
+    setEditandoItemIndex(null);
+  };
+
+  const alternarConclusao = (id: number) => {
+    setPedidos((prev) => {
+      const toggled = prev.map((p) =>
+        p.id === id ? { ...p, concluido: !p.concluido } : p
+      );
+      return toggled; // O useEffect de salvamento se encarrega de persistir
+    });
   };
 
   return (
     <div className="p-4 space-y-6">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold mb-6">Cadastro de Pedidos</h1>
+        <Link
+          to="/home"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Voltar
+        </Link>
+      </div>
+
       <Card className="p-4 space-y-4">
-        <h2 className="text-xl font-bold">Novo Pedido</h2>
+        <h2 className="text-xl font-bold">
+          {editandoId ? "Editar Pedido" : "Novo Pedido"}
+        </h2>
 
         <div>
           <Label htmlFor="cliente">Cliente</Label>
@@ -98,9 +207,9 @@ const Pedidos: React.FC = () => {
             className="border p-2 rounded w-full"
           >
             <option value={0}>Selecione um cliente</option>
-            {clientes.map((cliente) => (
-              <option key={cliente.id} value={cliente.id}>
-                {cliente.nome}
+            {clientes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nome}
               </option>
             ))}
           </select>
@@ -116,9 +225,9 @@ const Pedidos: React.FC = () => {
               className="border p-2 rounded w-full"
             >
               <option value={0}>Selecione um produto</option>
-              {produtos.map((produto) => (
-                <option key={produto.id} value={produto.id}>
-                  {produto.nome} - R${produto.preco.toFixed(2)}
+              {produtos.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome} - R${p.preco.toFixed(2)}
                 </option>
               ))}
             </select>
@@ -135,55 +244,139 @@ const Pedidos: React.FC = () => {
             />
           </div>
 
-          <Button onClick={adicionarItem}>Adicionar</Button>
+          {editandoItemIndex !== null ? (
+            <Button onClick={salvarItemEditado} className="bg-yellow-500">
+              Salvar Alteração
+            </Button>
+          ) : (
+            <Button onClick={adicionarItem}>Adicionar</Button>
+          )}
         </div>
 
         <div>
           <h3 className="font-semibold">Itens do Pedido</h3>
-          <ul className="list-disc pl-5">
-            {itens.map((item, index) => {
-              const produto = produtos.find(p => p.id === item.produtoId);
-              return (
-                <li key={index}>
-                  {produto?.nome} - {item.quantidade} x R${produto?.preco?.toFixed(2)} = R$
-                  {(produto?.preco ? produto.preco * item.quantidade : 0).toFixed(2)}
-                </li>
-              );
-            })}
-          </ul>
+          {itens.length === 0 ? (
+            <p className="text-gray-500">Nenhum item adicionado.</p>
+          ) : (
+            <ul className="list-disc pl-5">
+              {itens.map((item, idx) => {
+                const prod = produtos.find((p) => p.id === item.produtoId);
+                return (
+                  <li key={idx} className="flex items-center justify-between">
+                    <span>
+                      {prod?.nome} - {item.quantidade} x R$
+                      {prod?.preco.toFixed(2)} = R$
+                      {(prod?.preco ? prod.preco * item.quantidade : 0).toFixed(
+                        2
+                      )}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => editarItem(idx)}>
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => removerItem(idx)}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
 
-        <Button onClick={salvarPedido} className="bg-green-600 text-white">
-          Salvar Pedido
+        <Button
+          onClick={salvarPedido}
+          className={`${
+            editandoId ? "bg-blue-600" : "bg-green-600"
+          } text-white`}
+        >
+          {editandoId ? "Atualizar Pedido" : "Salvar Pedido"}
         </Button>
       </Card>
 
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Pedidos Realizados</h2>
-        {pedidos.length === 0 && <p className="text-gray-500">Nenhum pedido cadastrado.</p>}
+        {pedidos.length === 0 && (
+          <p className="text-gray-500">Nenhum pedido cadastrado.</p>
+        )}
 
-        {pedidos.map((pedido) => {
-          const cliente = clientes.find(c => c.id === pedido.clienteId);
-          return (
-            <Card key={pedido.id} className="p-4">
-              <p><strong>Cliente:</strong> {cliente?.nome}</p>
-              <p><strong>Total:</strong> R${pedido.total.toFixed(2)}</p>
-              <ul className="list-disc pl-5 mt-2">
-                {pedido.itens.map((item, index) => {
-                  const produto = produtos.find(p => p.id === item.produtoId);
-                  return (
-                    <li key={index}>
-                      {produto?.nome} - {item.quantidade} x R${produto?.preco.toFixed(2)}
-                    </li>
-                  );
-                })}
-              </ul>
-              <Button onClick={() => excluirPedido(pedido.id)} className="mt-3 bg-red-500 text-white">
-                Excluir
-              </Button>
-            </Card>
-          );
-        })}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {pedidos.map((ped) => {
+            const cli = clientes.find((c) => c.id === ped.clienteId);
+            return (
+              <Card
+                key={ped.id}
+                className="p-4 space-y-3 flex flex-col justify-between"
+              >
+                <div className="space-y-1">
+                  <p>
+                    <strong>Cliente:</strong> {cli?.nome}
+                  </p>
+                  <p>
+                    <strong>Data:</strong>{" "}
+                    {new Date(ped.data).toLocaleDateString()}
+                  </p>
+                  <p>
+                    <strong>Total:</strong> R$ {ped.total.toFixed(2)}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    {ped.concluido ? "Concluído" : "Pendente"}
+                  </p>
+
+                  <div className="mt-2">
+                    <h4 className="font-semibold">Itens:</h4>
+                    <ul className="list-disc pl-5 text-sm">
+                      {ped.itens.map((item, i) => {
+                        const prod = produtos.find(
+                          (p) => p.id === item.produtoId
+                        );
+                        return (
+                          <li key={i}>
+                            {prod?.nome} - {item.quantidade} x R$
+                            {prod?.preco.toFixed(2)} = R$
+                            {(prod?.preco
+                              ? prod.preco * item.quantidade
+                              : 0
+                            ).toFixed(2)}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Botões do Pedido */}
+                <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-200">
+                  <Button size="sm" onClick={() => editarPedido(ped)}>
+                    Editar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => excluirPedido(ped.id)}
+                  >
+                    Excluir
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => alternarConclusao(ped.id)}
+                    className="flex-grow"
+                  >
+                    {ped.concluido
+                      ? "Marcar como Pendente"
+                      : "Marcar como Concluído"}
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -23,7 +23,7 @@ export default function Login() {
 
     if (userData.email === email && userData.senha === senha) {
       alert("Login bem-sucedido!");
-      navigate("/cadastro"); // 👈 aqui mudamos para redirecionar para /cadastro
+      navigate("/home"); 
     } else {
       alert("Email ou senha incorretos.");
     }

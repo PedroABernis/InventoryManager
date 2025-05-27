@@ -21,37 +21,50 @@ interface Fornecedor {
 }
 
 export default function Produtos() {
-  const [produtos, setProdutos] = useState<Produto[]>([]);
+
+  const [produtos, setProdutos] = useState<Produto[]>(() => {
+    const dadosProdutos = localStorage.getItem("produtos");
+    try {
+      return dadosProdutos ? JSON.parse(dadosProdutos) : [];
+    } catch (e) {
+      console.error("Erro ao carregar produtos do localStorage:", e);
+      return [];
+    }
+  });
+
   const [nome, setNome] = useState("");
   const [preco, setPreco] = useState<number>(0);
   const [descricao, setDescricao] = useState("");
   const [fornecedor, setFornecedor] = useState("");
   const [imagem, setImagem] = useState<string | undefined>(undefined);
+
+  const [editandoProduto, setEditandoProduto] = useState<Produto | null>(null);
+
   const [filtroNome, setFiltroNome] = useState("");
   const [filtroFornecedor, setFiltroFornecedor] = useState("");
   const [ordemPreco, setOrdemPreco] = useState<"asc" | "desc">("asc");
 
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
 
-  
   useEffect(() => {
-    const dadosProdutos = localStorage.getItem("produtos");
-    if (dadosProdutos) {
-      setProdutos(JSON.parse(dadosProdutos));
-    }
-
     const dadosFornecedores = localStorage.getItem("fornecedores");
     if (dadosFornecedores) {
       setFornecedores(JSON.parse(dadosFornecedores));
     }
   }, []);
 
- 
   useEffect(() => {
-    if (produtos.length > 0) {
-      localStorage.setItem("produtos", JSON.stringify(produtos));
-    }
+    localStorage.setItem("produtos", JSON.stringify(produtos));
   }, [produtos]);
+
+  const limparFormulario = () => {
+    setNome("");
+    setPreco(0);
+    setDescricao("");
+    setFornecedor("");
+    setImagem(undefined);
+    setEditandoProduto(null); 
+  };
 
   function handleCadastrarProduto(e: React.FormEvent) {
     e.preventDefault();
@@ -60,33 +73,50 @@ export default function Produtos() {
       return;
     }
 
-    const novoProduto: Produto = {
-      id: Date.now(),
-      nome,
-      preco,
-      descricao,
-      fornecedor,
-      imagem,
-    };
+    if (editandoProduto) {
+      setProdutos((prevProdutos) =>
+        prevProdutos.map((p) =>
+          p.id === editandoProduto.id
+            ? {
+                ...p,
+                nome,
+                preco,
+                descricao,
+                fornecedor,
+                imagem,
+              }
+            : p
+        )
+      );
+    } else {
+ 
+      const novoProduto: Produto = {
+        id: Date.now(),
+        nome,
+        preco,
+        descricao,
+        fornecedor,
+        imagem,
+      };
+      setProdutos((prevProdutos) => [...prevProdutos, novoProduto]);
+    }
 
-    
-    setProdutos((prevProdutos) => {
-      const novosProdutos = [...prevProdutos, novoProduto];
-      return novosProdutos;
-    });
-
-  
-    setNome("");
-    setPreco(0);
-    setDescricao("");
-    setFornecedor("");
-    setImagem(undefined);
+    limparFormulario(); 
   }
 
   function handleExcluirProduto(id: number) {
-    const atualizados = produtos.filter(produto => produto.id !== id);
+    const atualizados = produtos.filter((produto) => produto.id !== id);
     setProdutos(atualizados);
-    localStorage.setItem("produtos", JSON.stringify(atualizados)); 
+
+  }
+
+  function handleEditarProduto(produto: Produto) {
+    setEditandoProduto(produto);
+    setNome(produto.nome);
+    setPreco(produto.preco);
+    setDescricao(produto.descricao);
+    setFornecedor(produto.fornecedor);
+    setImagem(produto.imagem); 
   }
 
   function handleUploadImagem(event: React.ChangeEvent<HTMLInputElement>) {
@@ -110,7 +140,7 @@ export default function Produtos() {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold mb-6">Cadastro de Produtos</h1>
         <Link
-          to="/cadastro"
+          to="/home"
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         >
           Voltar
@@ -150,12 +180,23 @@ export default function Produtos() {
           <div>
             <Label>Imagem</Label>
             <Input type="file" accept="image/*" onChange={handleUploadImagem} />
+            {imagem && (
+              <div className="mt-2">
+                <img src={imagem} alt="Pré-visualização da imagem" className="h-20 object-cover rounded" />
+                <Button variant="ghost" size="sm" onClick={() => setImagem(undefined)} className="text-red-500">Remover Imagem</Button>
+              </div>
+            )}
           </div>
         </div>
 
         <Button type="submit" className="w-full">
-          Cadastrar Produto
+          {editandoProduto ? "Atualizar Produto" : "Cadastrar Produto"}
         </Button>
+        {editandoProduto && (
+          <Button type="button" onClick={limparFormulario} variant="outline" className="w-full mt-2">
+            Cancelar Edição
+          </Button>
+        )}
       </form>
 
       <div className="bg-white p-6 rounded-lg shadow-md mb-6 space-y-4">
@@ -181,9 +222,18 @@ export default function Produtos() {
             <p className="text-gray-500">Fornecedor: {produto.fornecedor}</p>
             <p className="text-gray-400 text-sm mt-2">{produto.descricao}</p>
 
-            <Button variant="destructive" onClick={() => handleExcluirProduto(produto.id)} className="mt-auto">
-              Excluir
-            </Button>
+            <div className="flex gap-2 mt-auto pt-4">
+              <Button onClick={() => handleEditarProduto(produto)} className="flex-1">
+                Editar
+              </Button>
+              <Button
+                onClick={() => handleExcluirProduto(produto.id)}
+                variant="destructive"
+                className="flex-1"
+              >
+                Excluir
+              </Button>
+            </div>
           </div>
         ))}
       </div>
