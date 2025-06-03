@@ -31,19 +31,17 @@ interface Pedido {
 }
 
 const Pedidos: React.FC = () => {
-  // Inicialização do estado de pedidos usando uma função para carregar do localStorage
+
   const [pedidos, setPedidos] = useState<Pedido[]>(() => {
     const pedidosSalvos = localStorage.getItem("pedidos");
     try {
       return pedidosSalvos ? JSON.parse(pedidosSalvos) : [];
     } catch (e) {
       console.error("Erro ao carregar pedidos do localStorage:", e);
-      return []; // Em caso de erro ao parsear, retorna um array vazio
+      return []; 
     }
   });
 
-  // Clientes e Produtos são carregados aqui também, garantindo que estejam disponíveis
-  // Note que esses estados não precisam de funções de inicialização aqui se já são gerenciados em outras telas.
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
 
@@ -57,8 +55,6 @@ const Pedidos: React.FC = () => {
     null
   );
 
-  // useEffect para carregar Clientes e Produtos (e pedidos, se não inicializado acima)
-  // Este useEffect é executado apenas uma vez na montagem do componente
   useEffect(() => {
     const clientesLS = localStorage.getItem("clientes");
     if (clientesLS) {
@@ -69,11 +65,9 @@ const Pedidos: React.FC = () => {
     if (produtosLS) {
       setProdutos(JSON.parse(produtosLS));
     }
-    // A inicialização de 'pedidos' já está no useState, então não precisa aqui.
+  
   }, []);
 
-  // useEffect para salvar pedidos no localStorage sempre que o estado 'pedidos' mudar
-  // Este useEffect é o responsável por persistir as alterações
   useEffect(() => {
     localStorage.setItem("pedidos", JSON.stringify(pedidos));
   }, [pedidos]);
@@ -130,7 +124,7 @@ const Pedidos: React.FC = () => {
             ? { ...p, clienteId, itens, total: calcularTotal(itens) }
             : p
         );
-        return updated; // O useEffect de salvamento se encarrega de persistir
+        return updated; 
       });
       setEditandoId(null);
     } else {
@@ -144,11 +138,10 @@ const Pedidos: React.FC = () => {
       };
       setPedidos((prev) => {
         const appended = [...prev, novo];
-        return appended; // O useEffect de salvamento se encarrega de persistir
+        return appended; 
       });
     }
 
-    // Limpar formulário após salvar/atualizar
     setClienteId(0);
     setItens([]);
     setProdutoId(0);
@@ -159,7 +152,7 @@ const Pedidos: React.FC = () => {
   const excluirPedido = (id: number) => {
     setPedidos((prev) => {
       const filtered = prev.filter((p) => p.id !== id);
-      return filtered; // O useEffect de salvamento se encarrega de persistir
+      return filtered;
     });
   };
 
@@ -177,7 +170,7 @@ const Pedidos: React.FC = () => {
       const toggled = prev.map((p) =>
         p.id === id ? { ...p, concluido: !p.concluido } : p
       );
-      return toggled; // O useEffect de salvamento se encarrega de persistir
+      return toggled; 
     });
   };
 
@@ -326,7 +319,7 @@ const Pedidos: React.FC = () => {
                   </p>
                   <p>
                     <strong>Status:</strong>{" "}
-                    {ped.concluido ? "Concluído" : "Pendente"}
+                    {ped.concluido ? "Entregue" : "Pendente"}
                   </p>
 
                   <div className="mt-2">
@@ -351,7 +344,6 @@ const Pedidos: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Botões do Pedido */}
                 <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-200">
                   <Button size="sm" onClick={() => editarPedido(ped)}>
                     Editar
@@ -369,8 +361,8 @@ const Pedidos: React.FC = () => {
                     className="flex-grow"
                   >
                     {ped.concluido
-                      ? "Marcar como Pendente"
-                      : "Marcar como Concluído"}
+                      ? "Pendente"
+                      : "Concluído"}
                   </Button>
                 </div>
               </Card>
