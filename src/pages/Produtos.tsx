@@ -131,8 +131,8 @@ export default function Produtos() {
   }
 
   const produtosFiltrados = produtos
-    .filter((p) => p.nome.toLowerCase().includes(filtroNome.toLowerCase()))
-    .filter((p) => p.fornecedor.toLowerCase().includes(filtroFornecedor.toLowerCase()))
+    .filter((p) =>  p.nome.toLowerCase().includes(filtroNome.toLowerCase()))
+    .filter((p) =>  p.fornecedor.toLowerCase().includes(filtroFornecedor.toLowerCase()))
     .sort((a, b) => (ordemPreco === "asc" ? a.preco - b.preco : b.preco - a.preco));
 
   return (
