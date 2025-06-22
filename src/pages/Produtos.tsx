@@ -11,6 +11,7 @@ interface Produto {
   descricao: string;
   fornecedor: string;
   imagem?: string;
+  estoque: number; // Adicionando campo de estoque
 }
 
 interface Fornecedor {
@@ -97,6 +98,7 @@ export default function Produtos() {
         descricao,
         fornecedor,
         imagem,
+        estoque: 0, 
       };
       setProdutos((prevProdutos) => [...prevProdutos, novoProduto]);
     }

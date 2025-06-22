@@ -18,6 +18,7 @@ interface Fornecedor {
 }
 
 interface EntradaProduto {
+  produtoId: number;
   produtoNome: string;
   quantidade: number;
   valorTotal: number;
@@ -33,7 +34,7 @@ interface Transacao {
 }
 
 function generateId() {
-  return crypto.randomUUID(); // mais seguro e único
+  return crypto.randomUUID(); 
 }
 
 function getProdutos(): Produto[] {
@@ -61,25 +62,19 @@ export default function EntradaEstoque() {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
 
   const [fornecedorInput, setFornecedorInput] = useState("");
-  const [fornecedorSelecionado, setFornecedorSelecionado] =
-    useState<Fornecedor | null>(null);
-  const [showFornecedoresSugestoes, setShowFornecedoresSugestoes] =
-    useState(false);
+  const [fornecedorSelecionado, setFornecedorSelecionado] = useState<Fornecedor | null>(null);
+  const [showFornecedoresSugestoes, setShowFornecedoresSugestoes] = useState(false);
 
   const [produtoInput, setProdutoInput] = useState("");
   const [showProdutosSugestoes, setShowProdutosSugestoes] = useState(false);
 
-  const [listaEntradaProdutos, setListaEntradaProdutos] = useState<
-    EntradaProduto[]
-  >([]);
+  const [listaEntradaProdutos, setListaEntradaProdutos] = useState<EntradaProduto[]>([]);
 
   const [quantidadeInput, setQuantidadeInput] = useState("");
   const [valorTotalInput, setValorTotalInput] = useState("");
 
   const [mensagem, setMensagem] = useState("");
-  const [ultimasTransacoesIds, setUltimasTransacoesIds] = useState<string[]>(
-    []
-  );
+  const [ultimasTransacoesIds, setUltimasTransacoesIds] = useState<string[]>([]);
 
   useEffect(() => {
     setProdutos(getProdutos());
@@ -118,10 +113,17 @@ export default function EntradaEstoque() {
       return;
     }
 
+    const produtoSelecionado = produtos.find((p) => p.nome === produtoInput.trim());
+    if (!produtoSelecionado) {
+      alert("Produto não encontrado.");
+      return;
+    }
+
     setListaEntradaProdutos((prev) => [
       ...prev,
       {
-        produtoNome: produtoInput.trim(),
+        produtoId: produtoSelecionado.id,
+        produtoNome: produtoSelecionado.nome,
         quantidade,
         valorTotal,
       },
@@ -148,27 +150,20 @@ export default function EntradaEstoque() {
     const novosIds: string[] = [];
 
     listaEntradaProdutos.forEach((entrada) => {
-      let produto = prods.find(
-        (p) => p.nome.toLowerCase() === entrada.produtoNome.toLowerCase()
-      );
-      if (!produto) {
-        produto = {
-          id: Date.now() + Math.floor(Math.random() * 1000),
-          nome: entrada.produtoNome,
-          estoque: 0,
-          custo: 0,
-        };
-        prods.push(produto);
-      }
+      let produto = prods.find((p) => p.id === entrada.produtoId);
+      if (!produto) return;
 
-      produto.estoque += entrada.quantidade;
-      produto.custo =
-        entrada.quantidade > 0
-          ? entrada.valorTotal / entrada.quantidade
-          : produto.custo;
+      const estoqueAnterior = produto.estoque;
+      const custoAnterior = produto.custo ?? 0;
+      const valorEstoqueAnterior = estoqueAnterior * custoAnterior;
+
+      const novoEstoque = estoqueAnterior + entrada.quantidade;
+      const custoNovo = (valorEstoqueAnterior + entrada.valorTotal) / novoEstoque;
+
+      produto.estoque = novoEstoque;
+      produto.custo = custoNovo;
 
       const transacaoId = generateId();
-
       transacoes.push({
         id: transacaoId,
         produtoId: produto.id,
@@ -187,8 +182,6 @@ export default function EntradaEstoque() {
     setListaEntradaProdutos([]);
     setMensagem(`Documento gravado com sucesso!`);
     setUltimasTransacoesIds(novosIds);
-
-    // Resetar mensagem depois de 5 segundos
     setTimeout(() => setMensagem(""), 5000);
   };
 

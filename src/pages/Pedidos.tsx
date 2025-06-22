@@ -5,15 +5,26 @@ import { Label } from "../components/ui/label";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 
+interface Transacao {
+  id: string;
+  produtoId: number;
+  clienteId: number;
+  quantidade: number;
+  valorTotal: number;
+  data: string;
+}
+
 interface Cliente {
   id: number;
   nome: string;
 }
 
 interface Produto {
+  estoque: number;
   id: number;
   nome: string;
   preco: number;
+  ativo: boolean;
 }
 
 interface ItemPedido {
@@ -28,6 +39,19 @@ interface Pedido {
   total: number;
   data: string;
   concluido: boolean;
+  transacaoId?: string; 
+}
+
+function generateId() {
+  return crypto.randomUUID();
+}
+
+function getTransacoes(): Transacao[] {
+  return JSON.parse(localStorage.getItem("transacoes") || "[]");
+}
+
+function saveTransacoes(transacoes: Transacao[]) {
+  localStorage.setItem("transacoes", JSON.stringify(transacoes));
 }
 
 const Pedidos: React.FC = () => {
@@ -166,13 +190,68 @@ const Pedidos: React.FC = () => {
   };
 
   const alternarConclusao = (id: number) => {
-    setPedidos((prev) => {
-      const toggled = prev.map((p) =>
-        p.id === id ? { ...p, concluido: !p.concluido } : p
-      );
-      return toggled; 
-    });
-  };
+  const transacoes = getTransacoes();
+  const novosProdutos = [...produtos];
+
+  const pedidoParaConcluir = pedidos.find((p) => p.id === id);
+  if (!pedidoParaConcluir) return;
+
+  // Verificar se todos os produtos do pedido estão ativos
+  const produtosInativos = pedidoParaConcluir.itens.filter((item) => {
+    const produto = novosProdutos.find((p) => p.id === item.produtoId);
+    return produto ? produto.ativo === false : true; // também bloqueia se não encontrar o produto
+  });
+
+  if (produtosInativos.length > 0) {
+    alert(
+      `Não é possível concluir o pedido. O(s) produto(s) inativo(s):\n` +
+        produtosInativos
+          .map((item) => {
+            const p = novosProdutos.find((prod) => prod.id === item.produtoId);
+            return p?.nome ?? "Produto não encontrado";
+          })
+          .join(", ")
+    );
+    return; // impede a conclusão
+  }
+
+  const atualizados = pedidos.map((p) => {
+    if (p.id === id && !p.concluido) {
+      const transacaoId = generateId();
+
+      p.itens.forEach((item) => {
+        const produto = novosProdutos.find((prod) => prod.id === item.produtoId);
+        const precoUnitario = produto?.preco ?? 0;
+        const valorTotal = precoUnitario * item.quantidade;
+
+        if (produto) {
+          produto.estoque = Math.max(0, produto.estoque - item.quantidade);
+        }
+
+        transacoes.push({
+          id: transacaoId,
+          produtoId: item.produtoId,
+          clienteId: p.clienteId,
+          quantidade: -item.quantidade,
+          valorTotal,
+          data: new Date().toISOString(),
+        });
+      });
+
+      // salvar transações e produtos depois da alteração
+      localStorage.setItem("produtos", JSON.stringify(novosProdutos));
+      saveTransacoes(transacoes);
+      setProdutos(novosProdutos);
+
+      return { ...p, concluido: true, transacaoId };
+    }
+
+    return p;
+  });
+
+  setPedidos(atualizados);
+};
+
 
   return (
     <div className="p-4 space-y-6">
@@ -299,76 +378,82 @@ const Pedidos: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {pedidos.map((ped) => {
-            const cli = clientes.find((c) => c.id === ped.clienteId);
-            return (
-              <Card
-                key={ped.id}
-                className="p-4 space-y-3 flex flex-col justify-between"
-              >
-                <div className="space-y-1">
-                  <p>
-                    <strong>Cliente:</strong> {cli?.nome}
-                  </p>
-                  <p>
-                    <strong>Data:</strong>{" "}
-                    {new Date(ped.data).toLocaleDateString()}
-                  </p>
-                  <p>
-                    <strong>Total:</strong> R$ {ped.total.toFixed(2)}
-                  </p>
-                  <p>
-                    <strong>Status:</strong>{" "}
-                    {ped.concluido ? "Entregue" : "Pendente"}
-                  </p>
+  {pedidos.map((ped) => {
+    const cli = clientes.find((c) => c.id === ped.clienteId);
+    return (
+      <Card
+        key={ped.id}
+        className="p-4 space-y-3 flex flex-col justify-between"
+      >
+        <div className="space-y-1">
+          <p>
+            <strong>Cliente:</strong> {cli?.nome}
+          </p>
+          <p>
+            <strong>Data:</strong>{" "}
+            {new Date(ped.data).toLocaleDateString()}
+          </p>
+          <p>
+            <strong>Total:</strong> R$ {ped.total.toFixed(2)}
+          </p>
+          <p>
+            <strong>Status:</strong>{" "}
+            {ped.concluido ? "Entregue" : "Pendente"}
+          </p>
 
-                  <div className="mt-2">
-                    <h4 className="font-semibold">Itens:</h4>
-                    <ul className="list-disc pl-5 text-sm">
-                      {ped.itens.map((item, i) => {
-                        const prod = produtos.find(
-                          (p) => p.id === item.produtoId
-                        );
-                        return (
-                          <li key={i}>
-                            {prod?.nome} - {item.quantidade} x R$
-                            {prod?.preco.toFixed(2)} = R$
-                            {(prod?.preco
-                              ? prod.preco * item.quantidade
-                              : 0
-                            ).toFixed(2)}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-200">
-                  <Button size="sm" onClick={() => editarPedido(ped)}>
-                    Editar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => excluirPedido(ped.id)}
-                  >
-                    Excluir
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => alternarConclusao(ped.id)}
-                    className="flex-grow"
-                  >
-                    {ped.concluido
-                      ? "Pendente"
-                      : "Concluído"}
-                  </Button>
-                </div>
-              </Card>
-            );
-          })}
+          <div className="mt-2">
+            <h4 className="font-semibold">Itens:</h4>
+            <ul className="list-disc pl-5 text-sm">
+              {ped.itens.map((item, i) => {
+                const prod = produtos.find(
+                  (p) => p.id === item.produtoId
+                );
+                return (
+                  <li key={i}>
+                    {prod?.nome} - {item.quantidade} x R$
+                    {prod?.preco.toFixed(2)} = R$
+                    {(prod?.preco
+                      ? prod.preco * item.quantidade
+                      : 0
+                    ).toFixed(2)}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
+
+        <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-200">
+          <Button size="sm" onClick={() => editarPedido(ped)}>
+            Editar
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => excluirPedido(ped.id)}
+          >
+            Excluir
+          </Button>
+
+          {ped.concluido ? (
+            <div className="text-sm text-green-700 font-medium">
+              <p><strong>Concluido</strong> {ped.transacaoId}</p>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => alternarConclusao(ped.id)}
+              className="flex-grow"
+            >
+              Concluído
+            </Button>
+          )}
+        </div>
+      </Card>
+    );
+  })}
+</div>
+
       </div>
     </div>
   );

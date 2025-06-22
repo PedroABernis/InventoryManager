@@ -1,17 +1,16 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
+import PainelProdutos from "./PainelControle";
 
 export default function Cadastro() {
   const navigate = useNavigate();
 
   function handleLogout() {
-
     navigate("/login");
   }
 
   return (
-    <div className="min-h-screen p-8 bg-gray-100">
+    <div className="min-h-screen p-8 bg-gray-100 flex flex-col">
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Painel de Gerenciamento</h1>
         <Button onClick={handleLogout} variant="destructive">
@@ -19,22 +18,46 @@ export default function Cadastro() {
         </Button>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Button onClick={() => navigate("/cadastro/produtos")} className="h-32 text-xl">
-          Cadastro Produtos
-        </Button>
-        <Button onClick={() => navigate("/cadastro/clientes")} className="h-32 text-xl">
-          Cadastro Clientes
-        </Button>
-        <Button onClick={() => navigate("/cadastro/fornecedores")} className="h-32 text-xl">
-          Cadastro Fornecedores
-        </Button>
-        <Button onClick={() => navigate("/cadastro/pedidos")} className="h-32 text-xl">
-          Pedidos de Venda 
-        </Button>
-        <Button onClick={() => navigate("/cadastro/entradas")} className="h-32 text-xl">
-          Entrada de Produto
-        </Button>
+      {/* Conteúdo principal com sidebar e painel */}
+      <div className="flex flex-1 gap-6">
+        {/* Sidebar com botões - altura total e largura fixa */}
+        <nav className="flex flex-col gap-4 w-48">
+          <Button
+            onClick={() => navigate("/cadastro/produtos")}
+            className="h-16 text-lg"
+          >
+            Cadastro Produtos
+          </Button>
+          <Button
+            onClick={() => navigate("/cadastro/clientes")}
+            className="h-16 text-lg"
+          >
+            Cadastro Clientes
+          </Button>
+          <Button
+            onClick={() => navigate("/cadastro/fornecedores")}
+            className="h-16 text-lg"
+          >
+            Cadastro Fornecedores
+          </Button>
+          <Button
+            onClick={() => navigate("/cadastro/pedidos")}
+            className="h-16 text-lg"
+          >
+            Pedidos de Venda
+          </Button>
+          <Button
+            onClick={() => navigate("/cadastro/entradas")}
+            className="h-16 text-lg"
+          >
+            Entrada de Produto
+          </Button>
+        </nav>
+
+        {/* PainelProdutos ocupa o resto do espaço */}
+        <main className="flex-1 bg-white rounded-md shadow p-6 overflow-auto">
+          <PainelProdutos />
+        </main>
       </div>
     </div>
   );

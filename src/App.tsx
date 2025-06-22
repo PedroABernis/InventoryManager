@@ -9,6 +9,8 @@ import Fornecedores from "./pages/Fornecedores";
 import Pedidos from "./pages/Pedidos";
 import EntradaEstoque from "./pages/EntradaProdutos";
 
+
+
 function App() {
   return (
     <Router>
@@ -24,6 +26,7 @@ function App() {
         <Route path="/cadastro/entradas" element={<EntradaEstoque />} />
       </Routes>
     </Router>
+
   );
 }
 
