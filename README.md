@@ -1,54 +1,118 @@
-# React + TypeScript + Vite
+# 📦 InventoryManager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema web de gerenciamento de estoque desenvolvido para auxiliar no controle de produtos, clientes, fornecedores, pedidos de venda e movimentações de estoque.
 
-Currently, two official plugins are available:
+O projeto reúne funcionalidades de gerenciamento operacional em uma interface intuitiva, permitindo organizar cadastros, acompanhar produtos e registrar operações comerciais.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Funcionalidades
 
-## Expanding the ESLint configuration
+### 📋 Gerenciamento de produtos
+- Cadastro de produtos com nome, preço, descrição, fornecedor e imagem.
+- Edição e exclusão de produtos.
+- Pesquisa por nome.
+- Filtro por fornecedor.
+- Ordenação por preço.
+- Controle de status dos produtos (ativo/inativo).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 👥 Gerenciamento de clientes
+- Cadastro de clientes.
+- Registro de informações de contato, endereço e CPF/CNPJ.
+- Edição e exclusão de cadastros.
+- Filtros para facilitar a consulta.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+### 🏭 Gerenciamento de fornecedores
+- Cadastro de fornecedores.
+- Registro de informações como CNPJ, cidade, CEP e estado.
+- Edição e exclusão de registros.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 🛒 Gerenciamento de pedidos
+- Registro de pedidos vinculados a clientes.
+- Adição de produtos e quantidades aos pedidos.
+- Cálculo do valor total dos pedidos.
+- Edição e gerenciamento de pedidos.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 📥 Entrada de produtos
+- Registro de entradas de mercadorias.
+- Associação de entradas a fornecedores.
+- Registro de produtos, quantidades e valores.
+- Atualização das movimentações de estoque.
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+### 📊 Painel de gerenciamento
+- Consulta de produtos cadastrados.
+- Visualização de preços, custos, estoque e percentual de lucro.
+- Controle de status dos produtos.
+- Histórico de movimentações de estoque.
+
+## 🛠️ Tecnologias utilizadas
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- Radix UI
+- Lucide React
+
+## 💾 Armazenamento
+
+Nesta versão, a aplicação utiliza `localStorage` do navegador para armazenar dados de cadastros e operações, permitindo que as informações permaneçam disponíveis entre sessões no mesmo navegador.
+
+## ⚙️ Como executar o projeto
+
+### Pré-requisitos
+
+- Node.js
+- npm
+
+### Instalação
+
+1. Clone o repositório:
+
+   ```bash
+   git clone https://github.com/PedroABernis/InventoryManager.git
+   ```
+
+2. Acesse a pasta do projeto:
+
+   ```bash
+   cd InventoryManager
+   ```
+
+3. Instale as dependências:
+
+   ```bash
+   npm install
+   ```
+
+4. Execute a aplicação:
+
+   ```bash
+   npm run dev
+   ```
+
+5. Acesse o endereço disponibilizado pelo Vite no terminal.
+
+## 📌 Considerações
+
+O InventoryManager é um projeto em desenvolvimento, construído com o objetivo de explorar o desenvolvimento de aplicações web, organização de funcionalidades e gerenciamento de operações relacionadas a estoque.
+
+O armazenamento atual é local ao navegador, não sendo uma solução de persistência centralizada entre diferentes usuários ou dispositivos.
+
+## 🔮 Melhorias futuras
+
+- Implementação de backend.
+- Integração com banco de dados.
+- Aprimoramento da autenticação e gerenciamento de usuários.
+- Expansão dos indicadores e relatórios.
+- Aprimoramento do histórico de movimentações.
+- Evolução da arquitetura e organização do sistema.
+
+## 👨‍💻 Autor
+
+**Pedro Bernis**
+
+GitHub: [PedroABernis](https://github.com/PedroABernis)
+
+---
+
+*Projeto desenvolvido para fins de aprendizado e evolução prática em desenvolvimento web.*
